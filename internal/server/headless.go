@@ -22,8 +22,11 @@ package server
 import (
 	"context"
 	"log/slog"
+	"time"
+	"net/url"
+	"strings"
+	"fmt"
 
-	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	"github.com/nromsdahl/squarephish2/internal/models"
 )
@@ -37,14 +40,11 @@ import (
 // It returns the final URL or an error if the device code flow fails.
 //
 // https://github.com/denniskniep/DeviceCodePhishing/blob/main/pkg/entra/devicecode.go#L101
-func EnterDeviceCodeWithHeadlessBrowser(deviceCode models.DeviceCodeResponse, requestConfig models.RequestConfig) (string, error) {
-	var ctx context.Context
-	var cancel context.CancelFunc
-
+func EnterDeviceCodeWithHeadlessBrowser(deviceCode models.DeviceCodeResponse, requestConfig models.RequestConfig, tenantInfo *models.TenantInfo) (string, error) {
 	allocatorOpts := chromedp.DefaultExecAllocatorOptions[:]
 	allocatorOpts = append(allocatorOpts, chromedp.Flag("headless", true))
 	allocatorOpts = append(allocatorOpts, chromedp.UserAgent(requestConfig.UserAgent))
-	ctx, _ = chromedp.NewExecAllocator(context.Background(), allocatorOpts...)
+	ctx, cancel := chromedp.NewExecAllocator(context.Background(), allocatorOpts...)
 
 	var contextOpts []chromedp.ContextOption
 	contextOpts = append(contextOpts, chromedp.WithDebugf(slog.Debug))
@@ -53,7 +53,6 @@ func EnterDeviceCodeWithHeadlessBrowser(deviceCode models.DeviceCodeResponse, re
 	defer cancel()
 
 	var finalUrl string
-	var aadTitleHint []*cdp.Node
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(deviceCode.VerificationURI),
 
@@ -61,36 +60,57 @@ func EnterDeviceCodeWithHeadlessBrowser(deviceCode models.DeviceCodeResponse, re
 		chromedp.SendKeys(`#otc`, deviceCode.UserCode),
 		chromedp.Click(`#idSIButton9`),
 
-		chromedp.WaitVisible(`#cantAccessAccount`),
-		chromedp.Click(`#cantAccessAccount`),
-
-		chromedp.WaitVisible(`#aadTitleHint, #ContentPlaceholderMainContent_ButtonCancel`),
-		chromedp.Nodes(`aadTitleHint`, &aadTitleHint, chromedp.AtLeast(0)),
+		chromedp.WaitVisible(`//input[@name="loginfmt"]`, chromedp.BySearch),
+		chromedp.WaitVisible(`//input[@type="submit"]`, chromedp.BySearch),
+		chromedp.SendKeys(`//input[@name="loginfmt"]`, tenantInfo.ExampleUpn, chromedp.BySearch),
+		chromedp.Click(`//input[@type="submit"]`, chromedp.BySearch),
 	)
-	if err != nil {
-		return "", err
-	}
 
-	if len(aadTitleHint) > 0 {
-		err := chromedp.Run(ctx,
-			chromedp.WaitVisible(`#aadTitleHint`),
-			chromedp.Click(`#aadTitleHint`),
-		)
+	waitTimeMaxMs := 10000
+	waitTimeIntervalMs := 10
+	waitTimeCurrentMs := 0
+
+	for waitTimeCurrentMs <= waitTimeMaxMs {
+		time.Sleep(time.Duration(waitTimeIntervalMs) * time.Millisecond)
+		waitTimeCurrentMs = waitTimeCurrentMs + waitTimeIntervalMs
+
+		err = chromedp.Run(ctx, chromedp.Location(&finalUrl))
 		if err != nil {
 			return "", err
 		}
+
+		finalUrlParsed, err := url.Parse(finalUrl)
+		if err != nil {
+			return "", err
+		}
+
+		if strings.EqualFold(finalUrlParsed.Host, tenantInfo.UserRealmInfo.GetFederatedAuthURLHost()) {
+			return removeUpn(finalUrlParsed, tenantInfo.ExampleUpn)
+		}
 	}
 
-	err = chromedp.Run(ctx,
-		chromedp.WaitVisible(`#ContentPlaceholderMainContent_ButtonCancel`),
-		chromedp.Click(`#ContentPlaceholderMainContent_ButtonCancel`),
+	return "", fmt.Errorf("no redirect to federated authentication URL found")
+}
 
-		chromedp.WaitVisible(`#cantAccessAccount`),
-		chromedp.Location(&finalUrl),
-	)
-	if err != nil {
-		return "", err
+// removeUpn removes the UPN from the URL query parameters.
+// Parameters:
+//   - location: The URL location.
+//   - upn: The UPN to remove.
+//
+// It returns the URL with the UPN removed or an error if the URL is invalid.
+//
+// https://github.com/denniskniep/DeviceCodePhishing/blob/main/pkg/entra/devicecode.go#L155
+func removeUpn(location *url.URL, upn string) (string, error) {
+	queryParameters := location.Query()
+
+	for key, values := range location.Query() {
+		for _, val := range values {
+			if strings.EqualFold(val, upn) {
+				queryParameters.Del(key)
+				slog.Info("Removed Queryparameter '" + key + "'")
+			}
+		}
 	}
-
-	return finalUrl, nil
+	location.RawQuery = queryParameters.Encode()
+	return location.String(), nil
 }

@@ -22,7 +22,8 @@ import (
 func handler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	email := params.Get("email")
-	auto  := params.Get("auto")
+	auto := params.Get("auto")
+	domain := params.Get("domain")
 
 	if email == "" {
 		log.Print("[---] No email address found in request")
@@ -70,16 +71,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// Attempt to retrieve the authentication URL using the headless browser, if failure
 	// or if 'auto' is not true, send the email with the device code.
 	if auto == "true" {
-		log.Printf("[%s] Retrieving authentication URL", email)
-
-		authURL, err := EnterDeviceCodeWithHeadlessBrowser(deviceCodeResult, requestConfig)
-		if err == nil {
-			log.Printf("[%s] Successfully retrieved authentication URL: %s", email, authURL)
-			http.Redirect(w, r, authURL, http.StatusFound)
-			return
+		// If we made it this far, assume we want to continue regardles, so even if the 
+		// domain is missing or fails, we should still continue.
+		if domain == "" {
+			log.Printf("[%s] No tenant domain provided", email)
+		} else {
+			tenantInfo, err := GetTenantInfo(domain)
+			if err != nil {
+				log.Printf("[%s] Error getting tenant info: %s", email, err)
+			} else {
+				authURL, err := EnterDeviceCodeWithHeadlessBrowser(deviceCodeResult, requestConfig, tenantInfo)
+				if err == nil {
+					log.Printf("[%s] Successfully retrieved authentication URL: %s", email, authURL)
+					http.Redirect(w, r, authURL, http.StatusFound)
+					return
+				}
+				log.Printf("[%s] Failed to retrieve authentication URL, falling back to device code email: %s", email, err)
+			}
 		}
-
-		log.Printf("[%s] Failed to retrieve authentication URL, falling back to device code email: %s", email, err)
 	}
 
 	// --- 3b. Prepare user device code email ---

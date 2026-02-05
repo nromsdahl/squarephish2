@@ -11,6 +11,7 @@ import (
 	"github.com/nromsdahl/squarephish2/internal/database"
 	"github.com/nromsdahl/squarephish2/internal/email"
 	"github.com/nromsdahl/squarephish2/internal/models"
+	"github.com/nromsdahl/squarephish2/internal/server"
 )
 
 // EmailHandler handles the request for the send email page
@@ -55,6 +56,26 @@ func SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 	emailBody := r.FormValue("emailBody")
 	emailBodyType := r.FormValue("emailBodyType")
 	auto := r.FormValue("auto")
+	domain := r.FormValue("domain")
+
+	// Before we send the email, we need to validate the domain is federated.
+	if auto == "true" {
+		if domain == "" {
+			utils.RespondWithErrorMessage(w, "Tenant domain is required for automatic URL retrieval", err)
+			return
+		}
+
+		tenantInfo, err := server.GetTenantInfo(domain)
+		if err != nil {
+			utils.RespondWithErrorMessage(w, "Failed to retrieve tenant info", err)
+			return
+		}
+
+		if tenantInfo.UserRealmInfo.NameSpaceType != "Federated" {
+			utils.RespondWithErrorMessage(w, "Tenant is not federated, automatic URL retrieval is not possible", err)
+			return
+		}
+	}
 
 	// Clean up recipients and replace newlines with commas
 	// for uniform parsing.
@@ -85,7 +106,7 @@ func SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 		url := fmt.Sprintf("https://%s:%s/CkyAAx7xES?email=%s", config.SquarePhishConfig.Host, config.SquarePhishConfig.Port, recipient)
 
 		if auto == "true" {
-			url += "&auto=true"
+			url += "&auto=true&domain=" + domain
 		}
 
 		var qrCodeASCII string

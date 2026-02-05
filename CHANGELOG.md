@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.0.3] - 2026-02-04
+
+### Added
+
+- Patched the automatic authentication url retrieval process to only support federated tenants.
+    - See the latest [DeviceCodePhishing commit](https://github.com/denniskniep/DeviceCodePhishing/commit/aa9a34061cab4b148f6d4991eb38ad8ffce7025b)
+
 
 ## [2.0.2] - 2025-04-23
 

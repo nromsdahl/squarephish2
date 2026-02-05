@@ -68,6 +68,11 @@
                                 <input class="form-check-input" type="checkbox" role="switch" id="auto" name="auto" value="true">
                                 <label class="form-check-label" for="auto">Automatic authentication URL retrieval</label>
                             </div>
+                            <div id="domainField" class="mt-2 d-none">
+                                <label for="domain" class="form-label">Tenant domain</label>
+                                <input type="text" class="form-control" id="domain" name="domain" placeholder="example.com" disabled>
+                                <div class="form-text">Required for automatic URL retrieval.</div>
+                            </div>
                         </div>
 
                         <p class="text-muted">
@@ -119,6 +124,18 @@
                 // Initialize display
                 updateDisplay();
 
+
+                // --- Toggle domain field for auto URL retrieval ---
+                const autoCheckbox = document.getElementById('auto');
+
+                autoCheckbox.addEventListener('change', function () {
+                    const domainField = document.getElementById('domainField');
+                    const domainInput = document.getElementById('domain');
+                    const isChecked = autoCheckbox.checked;
+
+                    domainField.classList.toggle('d-none', !isChecked);
+                    domainInput.disabled = !isChecked;
+                });
 
                 // --- Preview Email Body ---
                 const previewButton = document.getElementById('previewButton');

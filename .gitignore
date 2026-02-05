@@ -39,6 +39,7 @@ todo.md
 # Custom ignores
 **/.DS_Store
 .vscode/
+.devcontainer/
 logs/
 *.log
 *.txt
