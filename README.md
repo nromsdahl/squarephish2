@@ -156,6 +156,8 @@ The send email page lets an operator specify a recipient and an initial QR code 
 
 Included is a function from [@denniskniep](https://github.com/denniskniep)'s [DeviceCodePhishing](https://github.com/denniskniep/DeviceCodePhishing) PoC that will automatically retrieve the authentication URL based on the generated device code. This technique removes the requirement for sending a second email to the victim containing the device code. Instead, once the QR code is scanned or the URL is clicked, the victim will be automatically redirected directly to the authentication page for the given OAuth flow.
 
+As of 19 September 2025, this technique no longer works against standard Entra tenants. Tenants configured with federation, however, remain affected. SquarePhish performs a preflight check to verify that the target domain belongs to a federated tenant before proceeding.
+
 > The included snippet from DeviceCodePhishing is licensed under Apache2.0
 
 <div align="center">
