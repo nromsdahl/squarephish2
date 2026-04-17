@@ -1,4 +1,5 @@
-{{ define "body" }}
+{% extends "base.html" %}
+{% block body %}
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="bi bi-envelope-fill me-2"></i>Send Email</h1>
             </div>
@@ -83,13 +84,56 @@
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="bi bi-send-fill me-2"></i>Send Email
                     </button>
+                    <button type="button" class="btn btn-outline-secondary btn-lg ms-2" id="clearFormButton">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </button>
                 </div>
             </form>
-{{ end }}
+{% endblock %}
 
-{{ define "scripts" }}
+{% block scripts %}
          <script>
             document.addEventListener('DOMContentLoaded', function () {
+                // --- Save/Restore Form State via localStorage ---
+                const STORAGE_KEY = 'squarephish_email_form';
+
+                function saveFormState() {
+                    const state = {
+                        recipients: document.getElementById('recipientsTextarea').value,
+                        emailBody: document.getElementById('emailBody').value,
+                        emailBodyType: document.querySelector('input[name="emailBodyType"]:checked')?.value || 'qrCode',
+                        auto: document.getElementById('auto').checked,
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                }
+
+                function restoreFormState() {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (!saved) return;
+                    try {
+                        const state = JSON.parse(saved);
+                        if (state.recipients) document.getElementById('recipientsTextarea').value = state.recipients;
+                        if (state.emailBody) document.getElementById('emailBody').value = state.emailBody;
+                        if (state.emailBodyType) {
+                            const radio = document.querySelector(`input[name="emailBodyType"][value="${state.emailBodyType}"]`);
+                            if (radio) radio.checked = true;
+                        }
+                        if (state.auto) document.getElementById('auto').checked = true;
+                    } catch (e) {}
+                }
+
+                restoreFormState();
+
+                document.getElementById('emailForm').addEventListener('input', saveFormState);
+                document.querySelectorAll('input[name="emailBodyType"]').forEach(r => r.addEventListener('change', saveFormState));
+                document.getElementById('auto').addEventListener('change', saveFormState);
+
+                document.getElementById('clearFormButton').addEventListener('click', function () {
+                    localStorage.removeItem(STORAGE_KEY);
+                    document.getElementById('emailForm').reset();
+                    updateDisplay();
+                });
+
                 // --- Update Email Body Hint Display ---
                 const qrCodeText = document.getElementById('qrCodeText');
                 const asciiQrCodeText = document.getElementById('asciiQrCodeText');
@@ -112,12 +156,31 @@
                 }
 
                 const radioButtons = document.querySelectorAll('input[name="emailBodyType"]');
+                const emailBody = document.getElementById('emailBody');
+                let lastPretext = '';
+
+                function loadPretext(type) {
+                    fetch('/pretext/' + type)
+                        .then(r => r.ok ? r.text() : '')
+                        .then(text => {
+                            if (text && (emailBody.value === '' || emailBody.value === lastPretext)) {
+                                emailBody.value = text;
+                                lastPretext = text;
+                            }
+                        })
+                        .catch(() => {});
+                }
+
                 radioButtons.forEach(radio => {
-                    radio.addEventListener('change', updateDisplay);
+                    radio.addEventListener('change', function () {
+                        updateDisplay();
+                        loadPretext(this.value);
+                    });
                 });
 
-                // Initialize display
+                // Initialize display and load default pretext
                 updateDisplay();
+                loadPretext(document.querySelector('input[name="emailBodyType"]:checked').value);
 
 
                 // --- Preview Email Body ---
@@ -240,4 +303,4 @@
                 }
             });
         </script>
-{{ end }}
+{% endblock %}
