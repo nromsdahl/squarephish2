@@ -1,4 +1,5 @@
-{{ define "body" }}
+{% extends "base.html" %}
+{% block body %}
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="bi bi-gear-fill me-2"></i>Configuration Settings</h1>
             </div>
@@ -12,20 +13,20 @@
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label for="smtpHost" class="form-label">SMTP Host</label>
-                                <input type="text" class="form-control" id="smtpHost" name="smtpHost" placeholder="e.g. localhost" value="{{ .SMTPConfig.Host }}">
+                                <input type="text" class="form-control" id="smtpHost" name="smtpHost" placeholder="e.g. localhost" value="{{ smtp_config.host }}">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="smtpPort" class="form-label">Port</label>
-                                <input type="text" class="form-control" id="smtpPort" name="smtpPort" placeholder="e.g. 465" value="{{ .SMTPConfig.Port }}">
+                                <input type="text" class="form-control" id="smtpPort" name="smtpPort" placeholder="e.g. 465" value="{{ smtp_config.port }}">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label for="smtpUsername" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="smtpUsername" name="smtpUsername" placeholder="e.g. username" value="{{ .SMTPConfig.Username }}">
+                            <input type="text" class="form-control" id="smtpUsername" name="smtpUsername" placeholder="e.g. username" value="{{ smtp_config.username }}">
                         </div>
                         <div class="mb-3">
                             <label for="smtpPassword" class="form-label">Password</label>
-                            <input type="text" class="form-control" id="smtpPassword" name="smtpPassword" placeholder="e.g. password" value="{{ .SMTPConfig.Password }}">
+                            <input type="password" class="form-control" id="smtpPassword" name="smtpPassword" placeholder="e.g. password" value="{{ smtp_config.password }}">
                         </div>
                     </div>
                 </div>
@@ -38,11 +39,11 @@
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label for="phishHost" class="form-label">Host</label>
-                                <input type="text" class="form-control" id="phishHost" name="phishHost" placeholder="e.g. 0.0.0.0" value="{{ .SquarePhishConfig.Host }}">
+                                <input type="text" class="form-control" id="phishHost" name="phishHost" placeholder="e.g. 0.0.0.0" value="{{ squarephish_config.host }}">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="phishPort" class="form-label">Port</label>
-                                <input type="text" class="form-control" id="phishPort" name="phishPort" placeholder="e.g. 443" value="{{ .SquarePhishConfig.Port }}">
+                                <input type="text" class="form-control" id="phishPort" name="phishPort" placeholder="e.g. 443" value="{{ squarephish_config.port }}">
                             </div>
                         </div>
                     </div>
@@ -55,15 +56,15 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="emailSubject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="emailSubject" name="emailSubject" placeholder="e.g. Subject" value="{{ .EmailConfig.Subject }}">
+                            <input type="text" class="form-control" id="emailSubject" name="emailSubject" placeholder="e.g. Subject" value="{{ email_config.subject }}">
                         </div>
                         <div class="mb-3">
                             <label for="emailSender" class="form-label">Sender</label>
-                            <input type="text" class="form-control" id="emailSender" name="emailSender" placeholder="e.g. Sender" value="{{ .EmailConfig.Sender }}">
+                            <input type="text" class="form-control" id="emailSender" name="emailSender" placeholder="e.g. Sender" value="{{ email_config.sender }}">
                         </div>
                         <div class="mb-3">
                             <label for="emailBody" class="form-label">Device Code Email Body</label>
-                            <textarea class="form-control" id="emailBody" name="emailBody" rows="10" placeholder="Enter the device code email body">{{ .EmailConfig.Body }}</textarea>
+                            <textarea class="form-control" id="emailBody" name="emailBody" rows="10" placeholder="Enter the device code email body">{{ email_config.body }}</textarea>
                         </div>
                         <p class="text-muted">
                             Device code email body requires <code>{DEVICE_CODE}</code> to insert the device code.<br/>
@@ -86,16 +87,29 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="entraClientID" class="form-label">Client ID</label>
-                            <input type="text" class="form-control" id="entraClientID" name="entraClientID" placeholder="e.g. 29d9ed98-a469-4536-ade2-f981bc1d605e" value="{{ .EntraConfig.ClientID }}">
+                            <input type="text" class="form-control" id="entraClientID" name="entraClientID" placeholder="e.g. 29d9ed98-a469-4536-ade2-f981bc1d605e" value="{{ entra_config.client_id }}">
                         </div>
                         <div class="mb-3">
                             <label for="entraScope" class="form-label">Scope</label>
-                            <input type="text" class="form-control" id="entraScope" name="entraScope" placeholder="e.g. .default offline_access profile openid" value="{{ .EntraConfig.Scope }}">
+                            <input type="text" class="form-control" id="entraScope" name="entraScope" placeholder="e.g. .default offline_access profile openid" value="{{ entra_config.scope }}">
                         </div>
                         <div class="mb-3">
                             <label for="entraTenant" class="form-label">Tenant</label>
-                            <input type="text" class="form-control" id="entraTenant" name="entraTenant" placeholder="e.g. common" value="{{ .EntraConfig.Tenant }}">
+                            <input type="text" class="form-control" id="entraTenant" name="entraTenant" placeholder="e.g. common" value="{{ entra_config.tenant }}">
                         </div>
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   id="autoPRT" name="autoPRT" value="true"
+                                   {% if entra_config.auto_prt == "true" %}checked{% endif %}>
+                            <label class="form-check-label" for="autoPRT">
+                                Auto-generate PRT (requires Broker authentication client)
+                            </label>
+                        </div>
+                        <p class="text-muted mt-1">
+                            When enabled and using the Broker client ID (29d9ed98-...-f981bc1d605e),
+                            automatically converts captured refresh tokens into Primary Refresh Tokens.
+                            Requires <code>roadtools</code> and <code>roadtx</code> to be installed.
+                        </p>
                     </div>
                 </div>
 
@@ -106,7 +120,7 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="userAgent" class="form-label">User Agent</label>
-                            <input type="text" class="form-control" id="userAgent" name="userAgent" placeholder="e.g. Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.3179.85" value="{{ .RequestConfig.UserAgent }}">
+                            <input type="text" class="form-control" id="userAgent" name="userAgent" placeholder="e.g. Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.3179.85" value="{{ request_config.user_agent }}">
                         </div>
                     </div>
                 </div>
@@ -118,13 +132,26 @@
                 </div>
 
             </form>
-{{ end }}
-{{ define "scripts" }}
+{% endblock %}
+{% block scripts %}
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                // --- Prefill Device Code Email Body ---
+                const emailBodyTextarea = document.getElementById('emailBody');
+                if (emailBodyTextarea && emailBodyTextarea.value.trim() === '') {
+                    fetch('/pretext/deviceCode')
+                        .then(r => r.ok ? r.text() : '')
+                        .then(text => {
+                            if (text && emailBodyTextarea.value.trim() === '') {
+                                emailBodyTextarea.value = text;
+                            }
+                        })
+                        .catch(() => {});
+                }
+
                 // --- Preview Email Body ---
                 const previewButton = document.getElementById('previewButton');
-                
+
                 previewButton.addEventListener('click', function () {
                     const emailBody = document.getElementById('emailBody');
 
@@ -205,4 +232,4 @@
                 }
             });
         </script>
-{{ end }}
+{% endblock %}

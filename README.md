@@ -23,7 +23,7 @@ An attacker will send an initial email to the victim that contains a QR code poi
 </div>
 
 ```
-INF[2025/04/20 02:29:30] Email sent to victim(s): minnow@victim.com
+2025-04-20 02:29:30 INFO Email sent to victim(s): minnow@victim.com
 ```
 
 ### Step 2: Victim Scans QR Code
@@ -34,17 +34,17 @@ The victim will then scan the QR code found in the email body with their mobile 
 
 When the SquarePhish server recieves the incoming QR code scan request, the OAuth Device Code authentication flow is intiated. The retrieved 'user code' is then sent via email to the victim where they are directed to enter the code into the legitimate Microsoft Device Code website.
 
-Once the email is sent to the victim, a goroutine is started that continues to poll the Microsoft Device Code endpoint for valid authentication. This will poll until the device code expires (15 minutes).
+Once the email is sent to the victim, a background thread continues to poll the Microsoft Device Code endpoint for valid authentication. This will poll until the device code expires (15 minutes).
 
 <div align="center">
     <img src="resc/device_code_email.png" height="50%" width="50%"></img>
 </div>
 
 ```
-INF[2025/04/20 02:29:34] [minnow@victim.com] Link triggered
-INF[2025/04/20 02:29:34] [minnow@victim.com] Initializing device code flow...
-INF[2025/04/20 02:29:34] [minnow@victim.com]     Client ID: 29d9ed98-a469-4536-ade2-f981bc1d605e
-INF[2025/04/20 02:29:34] [minnow@victim.com]     Scope:     .default offline_access profile openid
+2025-04-20 02:29:34 INFO [minnow@victim.com] Link triggered
+2025-04-20 02:29:34 INFO [minnow@victim.com] Initializing device code flow...
+2025-04-20 02:29:34 INFO [minnow@victim.com]     Client ID: 29d9ed98-a469-4536-ade2-f981bc1d605e
+2025-04-20 02:29:34 INFO [minnow@victim.com]     Scope:     .default offline_access profile openid
 ```
 
 ### Step 4: Victim Authentication
@@ -59,10 +59,24 @@ Once valid authentication occurs, the background polling retrieves and saves the
 </div>
 
 ```
-INF[2025/04/20 02:29:40] [minnow@victim.com] Polling for user authentication...
-INF[2025/04/20 02:29:40] [minnow@victim.com] Polling for user authentication...
-INF[2025/04/20 02:29:40] [minnow@victim.com] Authentication successful
-INF[2025/04/20 02:29:40] [minnow@victim.com] Token retrieved and saved to database
+2025-04-20 02:29:40 INFO [minnow@victim.com] Polling for user authentication...
+2025-04-20 02:29:40 INFO [minnow@victim.com] Polling for user authentication...
+2025-04-20 02:29:40 INFO [minnow@victim.com] Authentication successful
+2025-04-20 02:29:40 INFO [minnow@victim.com] Token retrieved and saved to database
+```
+
+<div align="center">
+    <h2>Installation</h2>
+</div>
+
+**Requirements:** Python 3.9+, Chrome/Chromium with chromedriver (for automatic auth URL retrieval)
+
+```bash
+# Install dependencies
+pip install -e .
+
+# Or install from requirements.txt
+pip install -r requirements.txt
 ```
 
 <div align="center">
@@ -72,15 +86,15 @@ INF[2025/04/20 02:29:40] [minnow@victim.com] Token retrieved and saved to databa
 > SquarePhish does not have authentication in front of the admin dashboard and as a result should be run behind a firewall and not exposed to the internet.
 
 ```
-usage: squarephish [<flags>]
+usage: squarephish [-h] [-c CONFIG] [-v] [--version]
 
-Flags:
-  -h, --[no-]help             Show context-sensitive help (also try --help-long and --help-man).
-  -c, --config="config.json"  Path to the config file
-  -v, --[no-]verbose          Enable verbose logging
-      --[no-]version          Show application version.
+options:
+  -h, --help            show this help message and exit
+  -c, --config CONFIG   Path to the config file (default: config.json)
+  -v, --verbose         Enable verbose logging
+  --version             show program's version number and exit
 
-example: ./squarephish --config config.json
+example: python -m squarephish --config config.json -v
 ```
 
 Modify the included configuration file `config.json` or use the below template:

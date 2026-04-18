@@ -1,11 +1,9 @@
-{{ define "base" }}
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>SquarePhish2 | {{ .Title }}</title>
+        <title>SquarePhish2 | {{ title }}</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -22,9 +20,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                     <div class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <a class="nav-link {{ if eq .ActivePage "dashboard" }}active{{ end }}" href="/">Dashboard</a>
-                        <a class="nav-link {{ if eq .ActivePage "config" }}active{{ end }}" aria-current="page" href="/config">Configuration</a>
-                        <a class="nav-link {{ if eq .ActivePage "email" }}active{{ end }}" aria-current="page" href="/email">Send Email</a>
+                        <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="/">Dashboard</a>
+                        <a class="nav-link {% if active_page == 'config' %}active{% endif %}" aria-current="page" href="/config">Configuration</a>
+                        <a class="nav-link {% if active_page == 'email' %}active{% endif %}" aria-current="page" href="/email">Send Email</a>
                     </div>
                     <div class="d-flex">
                         <button class="btn btn-outline-secondary" id="theme-toggler" type="button" title="Toggle theme">
@@ -38,16 +36,15 @@
         <div class="alert-fixed" id="alertPlaceholder"></div>
 
         <main class="container mt-4">
-            
-            {{template "body" .}}
+
+            {% block body %}{% endblock %}
 
         </main>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
         <script src="/static/js/theme.js"></script>
 
-        {{template "scripts" .}}
+        {% block scripts %}{% endblock %}
 
     </body>
 </html>
-{{ end }}

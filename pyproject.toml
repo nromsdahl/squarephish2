@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "squarephish"
+dynamic = ["version"]
+description = "Advanced phishing tool using OAuth Device Code flow and QR codes"
+requires-python = ">=3.9"
+dependencies = [
+    "flask>=3.0",
+    "requests>=2.31",
+    "qrcode[pil]>=7.4",
+    "selenium>=4.15",
+]
+
+[project.optional-dependencies]
+prt = ["roadtools", "roadtx"]
+
+[project.scripts]
+squarephish = "squarephish.__main__:main"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[tool.setuptools.packages.find]
+include = ["squarephish*"]

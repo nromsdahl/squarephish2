@@ -1,0 +1,4 @@
+flask>=3.0
+requests>=2.31
+qrcode[pil]>=7.4
+selenium>=4.15
